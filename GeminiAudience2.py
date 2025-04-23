@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 import time
 
-client = genai.Client(api_key="AIzaSyDgPvBN0glOm1v7OvXXDZC2rhKQEK6VyWc")
+client = genai.Client(api_key="YOUR_API_KEY_HERE")
 
 # ---------- 找出最新圖片 ----------
 def get_latest_image(folder="GeneratedImages"):
