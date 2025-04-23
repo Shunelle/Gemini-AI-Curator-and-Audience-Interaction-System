@@ -27,9 +27,10 @@ GeminiProject/
 ├── audience_feedback2.txt           # Feedback from Audience 2
 ├── audience_feedback3.txt           # Feedback from Audience 3
 ├── GeminiCurator.py                 # Curator: statement & image generation
-├── GeminiAudience1.py                # Audience: feedback generation
-├── GeminiAudience2.py                # Audience: feedback generation
-├── GeminiAudience3.py                # Audience: feedback generation
+├── GeminiAudience1.py               # Audience: feedback generation
+├── GeminiAudience2.py               # Audience: feedback generation
+├── GeminiAudience3.py               # Audience: feedback generation
+├── BlackFlicker.ps1                 # Black screen flicker effect
 ├── README.md                        # Project documentation
 ```
 
@@ -89,3 +90,22 @@ You can open:
 > ⚠️ Audience scripts check if the image was already commented on to avoid duplicate feedback.
 
 
+## 🌟 Flicker Black Screen Effect (BlackFlicker.ps1)
+
+To enhance the presentation experience, the project includes a Flicker Black Screen feature:
+-Randomly flashes black screens across multiple monitors.
+
+### 🖥️ How to Use Flicker
+Navigate to your project folder:
+```bash
+cd path\to\your\project
+```
+Allow script execution if blocked:
+```bash
+Set-ExecutionPolicy RemoteSigned -Scope Process
+```
+Run the flicker script:
+```bash
+.\BlackFlicker.ps1
+```
+⚠️ Requires at least two monitors to function properly.
