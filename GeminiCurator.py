@@ -10,7 +10,7 @@ from datetime import datetime
 import re
 
 # ====== Gemini Client API======
-client = genai.Client(api_key="AIzaSyDgPvBN0glOm1v7OvXXDZC2rhKQEK6VyWc")
+client = genai.Client(api_key="YOUR_API_KEY_HERE")
 
 # ====== Curator Prompt ======
 curator_prompt = '''
