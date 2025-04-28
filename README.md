@@ -66,7 +66,7 @@ This will generate:
 - Captions under each image.
 
 ```bash
-python CuratorMonitor.py
+python CuratorMonitor.py --api_key XXXXXXXX --save_images_folder GeneratedImages --save_texts_folder GeneratedTexts
 ```
 
 ---
@@ -77,13 +77,13 @@ This will:
 - Respond with audience feedback (written emotional reaction).
 
 ```bash
-python AudienceMonitor1.py
+python AudienceMonitor1.py --audience <number_tag of the audience> --description <Describe the personality traits of the AI audience.>
 ```
 ```bash
-python AudienceMonitor2.py
+python AudienceMonitor2.py --audience <number_tag of the audience> --description <Describe the personality traits of the AI audience.>
 ```
 ```bash
-python AudienceMonitor3.py
+python AudienceMonitor3.py --audience <number_tag of the audience> --description <Describe the personality traits of the AI audience.>
 ```
 
 You can open:
