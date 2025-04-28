@@ -28,9 +28,7 @@ GeminiProject/
   ├── audience_feedback2.txt           # Feedback from Audience 2
   ├── audience_feedback3.txt           # Feedback from Audience 3
 ├── GeminiCurator.py                 # Curator: statement & image generation
-├── GeminiAudience1.py               # Audience: feedback generation
-├── GeminiAudience2.py               # Audience: feedback generation
-├── GeminiAudience3.py               # Audience: feedback generation
+├── Audience.py                      # Audience: feedback generation
 ├── BlackFlicker.ps1                 # Black screen flicker effect
 ├── README.md                        # Project documentation
 ```
