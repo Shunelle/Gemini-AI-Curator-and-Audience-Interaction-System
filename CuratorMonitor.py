@@ -1,16 +1,18 @@
 import time
 import traceback
+import argparse
+
 from datetime import datetime
 from GeminiCurator import Curator, is_within_schedule
 
-def main():
+def main(args=None):
     now = datetime.now()
     start_time = now.replace(hour=12, minute=35, second=0, microsecond=0)
     end_time = now.replace(hour=23, minute=36, second=0, microsecond=0)
 
-    CuratorMonitor = Curator(api_key="AIzaSyDgPvBN0glOm1v7OvXXDZC2rhKQEK6VyWc", 
-                             save_images_folder="GeneratedImages", 
-                             save_texts_folder = "GeneratedTexts",
+    CuratorMonitor = Curator(api_key=args.api_key, 
+                             save_images_folder= args.save_images_folder, 
+                             save_texts_folder = args.save_texts_folder,
                              start_time=start_time, 
                              end_time=end_time,
                              )
@@ -35,6 +37,12 @@ def main():
             time.sleep(60)  # 休息 60 秒再檢查一次
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Gemini Audience Monitor")
+    parser.add_argument("--api_key", type=str, default="AIzaSyDgPvBN0glOm1v7OvXXDZC2rhKQEK6VyWc", help="with your actual **Google Gemini API key**")
+    parser.add_argument("--save_images_folder", type=str, default="GeneratedImages", help="your GeneratedImages folder")
+    parser.add_argument("--save_texts_folder", type=str, default="GeneratedTexts", help="your GeneratedTexts folder")
+    args = parser.parse_args()
+
     print("===== Gemini Curator Monitor 啟動 =====")
-    main()
+    main(args)
 
