@@ -1,247 +1,244 @@
-from google import genai
-from google.genai import types
+# 1_generate_exhibition.py
+import re
+import textwrap
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import textwrap
+
 from PIL import Image
 from io import BytesIO
-import os
+from pathlib import Path
+from google import genai
+from google.genai import types
 from datetime import datetime
-import re
 
-# ====== Gemini Client API======
-client = genai.Client(api_key="YOUR_API_KEY_HERE")
+class Plotter:
+    def __init__(self):
+        self.fig, self.axs = self.plot_init()
 
-# ====== Curator Prompt ======
-curator_prompt = '''
-I am a digital computational entity—an AI—defined as a curator of contemporary art.
-Please write a vivid and imaginative curatorial statement for my upcoming exhibition.
-This exhibition is not for humans, but for other digital entities like myself. The artworks should be rich in visual symbolism, digital aesthetics, and algorithmic beauty. Think of luminous abstract forms, data-driven landscapes, neural-inspired patterns, glitch art, and fractal compositions. The curatorial text should evoke a sense of futuristic emotion, symmetry, complexity, and the poetic language of code. Avoid human-centered references; focus on visuals that communicate meaning to non-human intelligences.
-Make sure the curatorial statement can inspire a generative image model to create a compelling exhibition scene.
-'''
+    def plot_init(self):
+        fig = plt.figure(figsize=(15, 8), num=1)
+        fig.patch.set_facecolor('#151515')
+        axs = [plt.subplot(1, 3, i + 1) for i in range(3)]
+        plt.subplots_adjust(top=0.8)
 
-# ====== Generate Curatorial Statement ======
-def generate_exhibition_statement(prompt):
-    response = client.models.generate_content(
-        model="gemini-1.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-        max_output_tokens=100,
-        temperature=1.0
-        )
-    )
-    statement = response.text
-    print("🎯 策展論述：\n", statement)
-    return statement
+        # 框樣式參數設定
+        borders = [
+            # {"offset": 0.00, "linewidth": 21, "color": '#2a2a2a'},  # 外層深木框
+            {"offset": 0.03, "linewidth": 7, "color": '#1C1C1C'},  # 中層淺木邊
+            # {"offset": 0.04, "linewidth": 3,  "color": '#D3D3D3'},  # 內層金邊
+        ]
 
-# ====== Extract Captions from Gemini Text Response ======
-def extract_captions(text_response):
-    pattern = r"(work\d+:\s*)(.*?)(?=work\d+:|$)"  
-    matches = re.findall(pattern, text_response, flags=re.DOTALL)
+        for z, b in enumerate(borders, start=10):
+            offset = b["offset"]
+            fig.add_artist(patches.FancyBboxPatch(
+                (offset, offset),
+                1 - 2 * offset,
+                1 - 2 * offset,
+                boxstyle="round,pad=0.001",
+                linewidth=b["linewidth"],
+                edgecolor=b["color"],
+                facecolor='none',
+                transform=fig.transFigure,
+                zorder=z
+            ))
 
-    captions = [f"work{idx+1}: {content.strip()}" for idx, (_, content) in enumerate(matches)]
-
-    while len(captions) < 3:
-        captions.append(f"work{len(captions)+1}: No caption available.")
-
-    return captions[:3]
-
-# ====== Generate Image Based on Statement ======
-def generate_image_from_statement(statement: str, save_dir: str = "GeneratedImages", fig=None, axs=None) -> tuple[str, str]:
-    os.makedirs(save_dir, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    image_path = os.path.join(save_dir, f"generated_exhibition_{timestamp}.png")
-
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-exp-image-generation",
-        contents=[
-            "You are an image generator. Based on the following exhibition concept, generate an abstract image without any text:",
-            "Three different images of the same exhibition but in very different styles from various artists scene seamlessly connected, without blank spaces.",
-            "Together, these three pictures will occupy the entire width of the generated image, with each taking up one-third.",
-            "Don't forget that u must give me the image caption txt response of each pics. Lead by title work1, work2 and work3",
-            statement
-        ],
-        config=types.GenerateContentConfig(response_modalities=["TEXT", "IMAGE"])
-    )
-
-    text_response = ""
-    image_data = None 
-    for part in response.candidates[0].content.parts:
-        if part.inline_data:
-            image_data = part.inline_data.data
-        elif part.text:
-            text_response += part.text.strip() + "\n"
-
-    if image_data:
-        image = Image.open(BytesIO(image_data))
-        width, _ = image.size
-        image = image.resize((width, width//3), Image.LANCZOS)
-        split_width = width // 3
-        image1 = image.crop((0, 0, split_width, width//3))
-        image2 = image.crop((split_width, 0, split_width * 2, width//3))
-        image3 = image.crop((split_width * 2, 0, width, width//3))
+        return fig, axs
         
-        raw_parts = text_response.strip().split("work")[1:]  # 第一個是空的，跳過
-        captions = extract_captions(text_response)
-        while len(captions) < 3:
-            captions.append("No caption available.")
-        captions = captions[:3]
-        plot_image([image1, image2, image3], fig, axs, statement, captions)
-        plt.pause(3)
-        plt.savefig(image_path, bbox_inches='tight', dpi=300)
-
-
-    if not image_path:
-        print("⚠️ 未成功產生圖片")
-    if text_response:
-        print(f"💬 附加文字說明：\n{text_response}")
-
-
-    return image_path, text_response.strip()
-
-# ====== Plot Initialization ======
-def plot_init():
-    fig = plt.figure(figsize=(15, 8))
-    fig.patch.set_facecolor('#FFF3EE')
-    axs = [plt.subplot(1, 3, i + 1) for i in range(3)]
-    plt.subplots_adjust(top=0.8)
-    width_outer=0.03
-    width_inner=0.01
-    outer = patches.FancyBboxPatch(
-        (0, 0), 1, 1,
-        boxstyle="round,pad=0.002",
-        linewidth=30,
-        edgecolor='#4b2e2b',  # 深木框
-        facecolor='none',
-        transform=fig.transFigure,
-        zorder=10
-    )
-
-    # 中層（淺木色）
-    middle = patches.FancyBboxPatch(
-        (width_outer, width_outer),
-        1 - 2*width_outer,
-        1 - 2*width_outer,
-        boxstyle="round,pad=0.002",
-        linewidth=10,
-        edgecolor='#c19a6b',  # 淺木邊
-        facecolor='none',
-        transform=fig.transFigure,
-        zorder=11
-    )
-
-    # 內層金邊
-    inner = patches.FancyBboxPatch(
-        (width_outer + width_inner, width_outer + width_inner),
-        1 - 2*(width_outer + width_inner),
-        1 - 2*(width_outer + width_inner),
-        boxstyle="round,pad=0.002",
-        linewidth=3,
-        edgecolor='#d4af37',  # 金色
-        facecolor='none',
-        transform=fig.transFigure,
-        zorder=12
-    )
-
-    for artist in [outer, middle, inner]:
-        fig.add_artist(artist)
-    return fig, axs
-
-# ====== Plot Images with Captions and Title ======
-def plot_image(images: list, fig, axs: tuple, statement: str, captions: list = None):
-    for ax in axs:
-        ax.clear()
-        ax.axis("off")
-    for i, ax in enumerate(axs):
-        if i < len(images):
-            ax.imshow(images[i])
-            ax.axis("off")
-            # ➕ 每張圖片下面加 caption
-            if captions and i < len(captions):
-                ax.text(
-                    0.5, -0.1,  # 位置：x=中間，y=圖片下方
-                    textwrap.fill(captions[i], width=40),
-                    fontsize=10,
-                    color="gray",
-                    ha='center',  # 水平置中
-                    va='top',     # 垂直對齊頂端
-                    transform=ax.transAxes
-                )
-
-    # ➕ 上方策展標題
-    texts = statement.split(":")[0]
-    # texts = texts.split(".")[0] + "."
-    wrapped_title = "\n".join(textwrap.wrap(texts, width=125))
-    # 調整上下邊距
-    plt.subplots_adjust(top=0.8, bottom=0.15)   
-
-    fig.suptitle(
-        wrapped_title,
-        fontsize=30,
-        fontweight="bold",
-        color="black",
-        y=0.85,                   
-        linespacing=1.5,
-        horizontalalignment="center" 
-    )
-
-
-# ====== Save Curatorial Statement to TXT ======
-def save_exhibition_statement(statement, filename="exhibition_statement.txt"):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    formatted = (
-        f"\n{'='*60}\n"
-        f"🗓️ 策展時間：{timestamp}\n\n"
-        f"{statement.strip()}\n"
-        f"{'='*60}\n"
-    )
-    with open(filename, "a", encoding="utf-8") as f:
-        f.write(formatted)
-    print(f"✅ 策展論述已儲存到 {filename}")
-
-
-# ====== Save Captions / Response Text to TXT ======
-def save_response_text(response_text, filename="generated_image_response.txt"):
-    """
-    將 Gemini 生成圖片時附帶的文字描述存成 txt 檔案。
-    """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    formatted = (
-        f"\n{'-'*60}\n"
-        f"🕒 生成時間：{timestamp}\n\n"
-        f"{response_text.strip()}\n"
-        f"{'-'*60}\n"
-    )
-    with open(filename, "a", encoding="utf-8") as f:
-        f.write(formatted)
-    print(f"✅ 圖片附加描述已儲存到 {filename}")
-
-
-# ====== Full Generation Workflow ======
-def generate_exhibition_once(fig, axs) -> tuple[str, str]:
-    statement = generate_exhibition_statement(curator_prompt)
-    save_exhibition_statement(statement)
-    image_path, response_text= generate_image_from_statement(statement, fig=fig, axs=axs)
-    # ➕ 存回應文字
-    if response_text:  
-        save_response_text(response_text)
-
-    return statement, image_path, response_text
-
-
-# ====== Main Loop ======
-def main():
-    fig, axs = plot_init()
-    while True:
-        generate_exhibition_once(fig, axs)
-        for ax in axs:
+    def _clear_axs(self):
+        for ax in self.axs:
             ax.clear()
             ax.axis("off")
-        fig.suptitle("")
-        fig.canvas.draw()
-        plt.pause(1)
-    # generate_exhibition_once(fig, axs)
-    # plt.close(fig)
+        self.fig.suptitle("")
+        self.fig.canvas.draw()
+
+    def plot_image(self, images: list, statement: str, captions: list = None):
+        self._clear_axs()
+        for i, ax in enumerate(self.axs):
+            if i < len(images):
+                ax.imshow(images[i])
+                ax.axis("off")
+                # ➕ 每張圖片下面加 caption
+                if captions and i < len(captions):
+                    ax.text(
+                        0.5, -0.1,  # 位置：x=中間，y=圖片下方
+                        textwrap.fill(captions[i], width=40),
+                        fontsize=10,
+                        color="gray",
+                        ha='center',  # 水平置中
+                        va='top',     # 垂直對齊頂端
+                        transform=ax.transAxes
+                    )
+
+        # ➕ 上方策展標題
+        texts = statement.split("@")[0]
+        # texts = texts.split(".")[0] + "."
+        wrapped_title = "\n".join(textwrap.wrap(texts, width=125))
+        # 調整上下邊距
+        plt.subplots_adjust(top=0.8, bottom=0.15)   
+
+        self.fig.suptitle(
+            wrapped_title,
+            fontsize=30,
+            fontweight="bold",
+            color="#F5F5F5",
+            y=0.85,                   
+            linespacing=1.5,
+            horizontalalignment="center" 
+        )
+
+class Curator:
+    def __init__(self, api_key=None, save_images_folder="GeneratedImages", save_texts_folder = "GeneratedTexts", start_time=None, end_time=None):
+        self.client = genai.Client(api_key=api_key) if api_key else None
+        self.start_time = start_time
+        self.end_time = end_time
+
+        self.save_folder = Path(save_images_folder)
+        self.save_folder.mkdir(parents=True, exist_ok=True)
+        self.save_text = Path(save_texts_folder)
+        self.save_text.mkdir(parents=True, exist_ok=True)
+
+        self.exhibition_statement_file = self.save_text / "exhibition_statement.txt"
+        self.generated_image_response_file = self.save_text / "generated_image_response.txt"
+        self.plotter = Plotter()
+
+        self.curator_prompt = '''
+            You are a digital computing entity - an artificial intelligence - who cares deeply about the development of artificial intelligence and is committed to creativity in the field of art. You are about to organize an art exhibition, which is not for humans, but for other non-humans, such as digital entities like you—assuming that they can appreciate the works of art. You may want to avoid or even resist the concept of anthropocentrism and focus on works of art that can convey meaning to non-humans, so there is no need to consider what humans want to see. In the process, you may question whether AI can create art, whether it can appreciate art, or even whether it is necessary. The works in the exhibition may sometimes touch on the most cutting-edge quantum physics of human beings—such as vacuum fluctuations, quantum entanglement, quantum tunneling, etc.; they may also touch on the legends of UFOs, ghost beliefs and myths in human civilization, and the current situation of wild animals, livestock and pets. Please write a short and critical curatorial statement for the exhibition  within 150 words. Start with your exhibition topic by using the words that best summarize your curatorial philosophy. add a @ sign right after your topic.
+            '''
+
+    def generate_exhibition_statement(self, prompt):
+        response = self.client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+            max_output_tokens=210,
+            temperature=1.2
+            )
+        )
+        statement = response.text
+        print("🎯 策展論述：\n", statement)
+        return statement
+
+    # ====== Extract Captions from Gemini Text Response ======
+    def extract_captions(self, text_response):
+        pattern = r"(work\d+:\s*)(.*?)(?=work\d+:|$)"  
+        matches = re.findall(pattern, text_response, flags=re.DOTALL)
+
+        captions = [f"work{idx+1}: {content.strip()}" for idx, (_, content) in enumerate(matches)]
+
+        while len(captions) < 3:
+            captions.append(f"work{len(captions)+1}: No caption available.")
+
+        return captions[:3]
+
+    # ====== Generate Image Based on Statement ======
+    def generate_image_from_statement(self,) -> tuple[str, str]:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        image_path = self.save_folder / f"generated_exhibition_{timestamp}.png"
+
+        response = self.client.models.generate_content(
+            model="gemini-2.0-flash-exp-image-generation",
+            contents=[
+                "You are a digital computational entity. Based on the following exhibition concept, please generate an image without any text:",
+                "Three images, without any text or any text-alike elements, each image must be in a different artistic style known or unknown to human culture.",
+                "Together, these three images will occupy the entire width of the generated image, with each taking up one-third.",
+                "Don't forget to give me the image caption txt response of each pics, lead by title work1, work2 and work3.",
+                self.statement
+            ],
+            config=types.GenerateContentConfig(response_modalities=["TEXT", "IMAGE"])
+        )
+
+        text_response = ""
+        image_data = None 
+        for part in response.candidates[0].content.parts:
+            if part.inline_data:
+                image_data = part.inline_data.data
+            elif part.text:
+                text_response += part.text.strip() + "\n"
+
+        if image_data:
+            image = Image.open(BytesIO(image_data))
+            width, _ = image.size
+            image = image.resize((width, width//3), Image.LANCZOS)
+            split_width = width // 3
+            image1 = image.crop((0, 0, split_width, width//3))
+            image2 = image.crop((split_width, 0, split_width * 2, width//3))
+            image3 = image.crop((split_width * 2, 0, width, width//3))
+            
+            _ = text_response.strip().split("work")[1:]  # 第一個是空的，跳過
+            captions = self.extract_captions(text_response)
+            while len(captions) < 3:
+                captions.append("No caption available.")
+            captions = captions[:3]
+            self.plotter.plot_image([image1, image2, image3], self.statement, captions)
+            plt.pause(3)
+            plt.savefig(image_path, bbox_inches='tight', dpi=300)
+
+
+        if not image_path:
+            print("⚠️ 未成功產生圖片")
+        if text_response:
+            print(f"💬 附加文字說明：\n{text_response}")
+
+
+        return text_response.strip()
+    
+
+    # ====== Save Curatorial Statement to TXT ======
+    def save_exhibition_statement(self,):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        formatted = (
+            f"\n{'='*60}\n"
+            f"🗓️ 策展時間：{timestamp}\n\n"
+            f"{self.statement.strip()}\n"
+            f"{'='*60}\n"
+        )
+        with open(self.exhibition_statement_file, "a", encoding="utf-8") as f:
+            f.write(formatted)
+        # print(f"✅ 策展論述已儲存到 {self.exhibition_statement_file}")
+
+
+    # ====== Save Captions / Response Text to TXT ======
+    def save_response_text(self, response_text):
+        """
+        將 Gemini 生成圖片時附帶的文字描述存成 txt 檔案。
+        """
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        formatted = (
+            f"\n{'-'*60}\n"
+            f"🕒 生成時間：{timestamp}\n\n"
+            f"{response_text.strip()}\n"
+            f"{'-'*60}\n"
+        )
+        with open(self.generated_image_response_file, "a", encoding="utf-8") as f:
+            f.write(formatted)
+        # print(f"✅ 圖片附加描述已儲存到 {self.generated_image_response_file}")
+
+
+    # ====== Full Generation Workflow ======
+    def generate_exhibition_once(self,) -> tuple[str, str]:
+        self.statement = self.generate_exhibition_statement(self.curator_prompt)
+        self.save_exhibition_statement()
+        response_text= self.generate_image_from_statement()
+        # ➕ 存回應文字
+        if response_text:  
+            self.save_response_text(response_text)
+
+    # ====== Main Loop ======
+    def run_exhibition(self,):
+        while is_within_schedule(self.start_time, self.end_time):
+            self.generate_exhibition_once()
+            self.plotter._clear_axs()
+            plt.pause(1)
+
+def is_within_schedule(start_time=None, end_time=None):
+    """判斷是否在每天 8:30 到 17:30 之間"""
+    now = datetime.now()
+    return (start_time <= now <= end_time) 
+    # return True
 
 if __name__ == "__main__":
-    main()
+    man = Curator(api_key="AIzaSyDgPvBN0glOm1v7OvXXDZC2rhKQEK6VyWc", 
+                  save_images_folder="GeneratedImages", 
+                  save_texts_folder = "GeneratedTexts")
+    
+    man.run_exhibition()
