@@ -21,7 +21,6 @@ def main(args=None):
             try:
                 CuratorMonitor.run_exhibition()  # 執行策展
                 print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] >>> GeminiCurator 開始執行")
-                # GeminiCurator.main()  # 執行 GeminiCurator 裡的 main() 函數
             except Exception as e:
                 print("\n" + "=" * 60)
                 print("[ERROR] GeminiCurator 崩潰了，錯誤訊息：")
@@ -29,11 +28,7 @@ def main(args=None):
                 print("=" * 60)
                 print(">>> 5 秒後重啟 GeminiCurator...\n")
                 time.sleep(5)
-            # finally:
-            #     # 避免 importlib cache 問題，強制 reload
-            #     importlib.reload(GeminiCurator)
         else:
-            # print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 💤 非執行時間，等待 60 秒後再檢查...")
             time.sleep(60)  # 休息 60 秒再檢查一次
 
 if __name__ == "__main__":
