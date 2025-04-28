@@ -21,11 +21,12 @@ The interaction continues in a loop:
 ```
 GeminiProject/
 ├── GeneratedImages/                 # Auto-saved generated images
-├── exhibition_statement.txt         # Saved curator statements
-├── generated_image_response.txt     # Captions of each generated image
-├── audience_feedback1.txt           # Feedback from Audience 1
-├── audience_feedback2.txt           # Feedback from Audience 2
-├── audience_feedback3.txt           # Feedback from Audience 3
+├── GeneratedTexts/                  # Auto-saved generated texts
+  ├── exhibition_statement.txt         # Saved curator statements
+  ├── generated_image_response.txt     # Captions of each generated image
+  ├── audience_feedback1.txt           # Feedback from Audience 1
+  ├── audience_feedback2.txt           # Feedback from Audience 2
+  ├── audience_feedback3.txt           # Feedback from Audience 3
 ├── GeminiCurator.py                 # Curator: statement & image generation
 ├── GeminiAudience1.py               # Audience: feedback generation
 ├── GeminiAudience2.py               # Audience: feedback generation
