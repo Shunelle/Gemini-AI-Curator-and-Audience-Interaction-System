@@ -66,7 +66,7 @@ This will generate:
 - Captions under each image.
 
 ```bash
-python GeminiCurator.py
+python CuratorMonitor.py
 ```
 
 ---
@@ -77,18 +77,18 @@ This will:
 - Respond with audience feedback (written emotional reaction).
 
 ```bash
-python GeminiAudience1.py
+python AudienceMonitor1.py
 ```
 ```bash
-python GeminiAudience2.py
+python AudienceMonitor2.py
 ```
 ```bash
-python GeminiAudience3.py
+python AudienceMonitor3.py
 ```
 
 You can open:
 - **One terminal for curator (looped).**
-- **One or multiple terminals for audience (looped independently).**
+- **One or multiple terminals for an audience (looped independently).**
 
 > ⚠️ Audience scripts check if the image was already commented on to avoid duplicate feedback.
 
