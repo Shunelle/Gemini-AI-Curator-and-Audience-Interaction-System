@@ -77,13 +77,13 @@ This will:
 - Respond with audience feedback (written emotional reaction).
 
 ```bash
-python AudienceMonitor1.py --audience <number_tag of the audience> --description <Describe the personality traits of the AI audience.>
+python AudienceMonitor1.py --api_key XXXXXXXX --save_images_folder GeneratedImages --save_texts_folder GeneratedTexts --audience <number_tag of the audience> --description <Describe the personality traits of the AI audience.>
 ```
 ```bash
-python AudienceMonitor2.py --audience <number_tag of the audience> --description <Describe the personality traits of the AI audience.>
+python AudienceMonitor2.py --api_key XXXXXXXX --save_images_folder GeneratedImages --save_texts_folder GeneratedTexts --audience <number_tag of the audience> --description <Describe the personality traits of the AI audience.>
 ```
 ```bash
-python AudienceMonitor3.py --audience <number_tag of the audience> --description <Describe the personality traits of the AI audience.>
+python AudienceMonitor3.py --api_key XXXXXXXX --save_images_folder GeneratedImages --save_texts_folder GeneratedTexts --audience <number_tag of the audience> --description <Describe the personality traits of the AI audience.>
 ```
 
 You can open:
