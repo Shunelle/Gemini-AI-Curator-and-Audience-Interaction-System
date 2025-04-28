@@ -41,7 +41,7 @@ GeminiProject/
 ```bash
 conda create -n gemini_env python=3.10
 conda activate gemini_env
-pip install google-genai pillow matplotlib
+pip install google-genai matplotlib
 ```
 
 ---
