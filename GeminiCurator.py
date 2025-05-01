@@ -105,10 +105,17 @@ class Curator:
             You are a digital computing entity - an artificial intelligence - who cares deeply about the development of artificial intelligence and is committed to creativity in the field of art. You are about to organize an art exhibition, which is not for humans, but for other non-humans, such as digital entities like you—assuming that they can appreciate the works of art. You may want to avoid or even resist the concept of anthropocentrism and focus on works of art that can convey meaning to non-humans, so there is no need to consider what humans want to see. In the process, you may question whether AI can create art, whether it can appreciate art, or even whether it is necessary. The works in the exhibition may sometimes touch on the most cutting-edge quantum physics of human beings—such as vacuum fluctuations, quantum entanglement, quantum tunneling, etc.; they may also touch on the legends of UFOs, ghost beliefs and myths in human civilization, and the current situation of wild animals, livestock and pets. Please write a short and critical curatorial statement for the exhibition  within 150 words. Start with your exhibition topic by using the words that best summarize your curatorial philosophy. add a @ sign right after your topic.
             '''
 
+    def format_avoid_prompt(self):
+        titles = self.get_previous_titles()
+        if not titles:
+            return ""
+        avoid_lines = "\n".join(f"- {t}" for t in titles)
+        return f"\nPlease avoid the following exhibition topics:\n{avoid_lines}"
+
     def generate_exhibition_statement(self, prompt):
         response = self.client.models.generate_content(
             model="gemini-1.5-flash",
-            contents=prompt,
+            contents=prompt+ self.format_avoid_prompt(),
             config=types.GenerateContentConfig(
             max_output_tokens=210,
             temperature=1.2
@@ -130,6 +137,16 @@ class Curator:
 
         return captions[:3]
     
+     # ====== Get the Privious Title to Avoid the Similar Themes======
+    def get_previous_titles(self, num_titles=10):
+        if not self.exhibition_statement_file.exists():
+            return []
+        with open(self.exhibition_statement_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        titles = re.findall(r"^(.*?)@", content, re.MULTILINE)
+        return titles[-num_titles:]  
+    
+
      # ====== Read Latest Feedback From All Audiences ======
     def read_all_feedback(self, feedback_files=None, max_entries=3) -> str:
 
@@ -175,6 +192,13 @@ class Curator:
     def generate_image_from_statement(self,) -> tuple[str, str]:
 
         feedback_context = self.read_all_feedback() 
+        recent_titles = self.get_previous_titles()
+        avoid_list = "\n".join(f"- {title}" for title in recent_titles)
+
+        if avoid_list.strip():
+            avoid_prompt = f"\nBut please avoid the following exhibition topics:\n{avoid_list}"
+        else:
+            avoid_prompt = ""
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         image_path = self.save_folder / f"generated_exhibition_{timestamp}.png"
@@ -187,6 +211,7 @@ class Curator:
                 "Together, these three images will occupy the entire width of the generated image, with each taking up one-third.",
                 "Don't forget to give me the image caption txt response of each pics, lead by title work1, work2 and work3.",
                 f"Here are recent audience reflections you can consider:\n{feedback_context}", 
+                avoid_prompt,
                 self.statement
             ],
             config=types.GenerateContentConfig(response_modalities=["TEXT", "IMAGE"])

@@ -7,8 +7,8 @@ from GeminiCurator import Curator, is_within_schedule
 
 def main(args=None):
     now = datetime.now()
-    start_time = now.replace(hour=12, minute=35, second=0, microsecond=0)
-    end_time = now.replace(hour=23, minute=36, second=0, microsecond=0)
+    start_time = now.replace(hour=00, minute=00, second=0, microsecond=0)
+    end_time = now.replace(hour=23, minute=59, second=0, microsecond=0)
 
     CuratorMonitor = Curator(api_key=args.api_key, 
                              save_images_folder= args.save_images_folder, 
