@@ -129,9 +129,53 @@ class Curator:
             captions.append(f"work{len(captions)+1}: No caption available.")
 
         return captions[:3]
+    
+     # ====== Read Latest Feedback From All Audiences ======
+    def read_all_feedback(self, feedback_files=None, max_entries=3) -> str:
+
+        if feedback_files is None:
+            feedback_files = [
+                "GeneratedTexts/audience_feedback1.txt",
+                "GeneratedTexts/audience_feedback2.txt",
+                "GeneratedTexts/audience_feedback3.txt",
+            ]
+
+        all_feedback = []
+
+        for file in feedback_files:
+            try:
+                with open(file, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+
+                feedback_blocks = []
+                current_block = []
+                inside_block = False
+
+                for line in lines:
+                    if line.startswith("🕒 時間："):
+                        inside_block = True
+                        current_block = []
+                    elif line.startswith("------------------------------------------------------------"):
+                        if current_block:
+                            feedback_blocks.append("".join(current_block).strip())
+                        inside_block = False
+                    elif inside_block:
+                        current_block.append(line)
+
+                recent_feedback = feedback_blocks[-max_entries:]
+                all_feedback.extend(recent_feedback)
+
+            except FileNotFoundError:
+                continue
+
+        return "\n".join(all_feedback).strip()
+
 
     # ====== Generate Image Based on Statement ======
     def generate_image_from_statement(self,) -> tuple[str, str]:
+
+        feedback_context = self.read_all_feedback() 
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         image_path = self.save_folder / f"generated_exhibition_{timestamp}.png"
 
@@ -142,6 +186,7 @@ class Curator:
                 "Three images, without any text or any text-alike elements, each image must be in a different artistic style known or unknown to human culture.",
                 "Together, these three images will occupy the entire width of the generated image, with each taking up one-third.",
                 "Don't forget to give me the image caption txt response of each pics, lead by title work1, work2 and work3.",
+                f"Here are recent audience reflections you can consider:\n{feedback_context}", 
                 self.statement
             ],
             config=types.GenerateContentConfig(response_modalities=["TEXT", "IMAGE"])
